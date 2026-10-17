@@ -1,13 +1,17 @@
 """API HTTP para consultas e análises do banco de vendas."""
 
 import os
+import secrets
 import sqlite3
+import time
 from contextlib import asynccontextmanager, closing
 from datetime import date
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request, Response
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from criar_banco import criar_banco
 
@@ -45,6 +49,19 @@ def validar_intervalo_datas(
 
 def criar_app(caminho_banco: Path = CAMINHO_BANCO) -> FastAPI:
     """Configura as rotas HTTP e inicializa o banco se ele ainda não existir."""
+    sessoes_admin: dict[str, float] = {}
+    duracao_sessao = 3600
+    diretorio_portal = Path(__file__).with_name("portal")
+
+    def obter_sessao_admin(request: Request) -> str:
+        """Valida a existência e validade da sessão administrativa."""
+        sessao = request.cookies.get("sessao_admin")
+        expiracao = sessoes_admin.get(sessao) if sessao else None
+        if expiracao is None or expiracao <= time.monotonic():
+            if sessao:
+                sessoes_admin.pop(sessao, None)
+            raise HTTPException(status_code=401, detail="Autenticação necessária.")
+        return sessao
 
     @asynccontextmanager
     async def lifespan(_: FastAPI):
@@ -63,6 +80,94 @@ def criar_app(caminho_banco: Path = CAMINHO_BANCO) -> FastAPI:
         version="1.0.0",
         lifespan=lifespan,
     )
+    app.mount(
+        "/portal-assets",
+        StaticFiles(directory=diretorio_portal / "assets"),
+        name="portal-assets",
+    )
+
+    @app.get("/", include_in_schema=False)
+    def portal() -> FileResponse:
+        """Entrega a interface web do portal de vendas."""
+        return FileResponse(diretorio_portal / "index.html")
+
+    @app.post("/admin/login", include_in_schema=False)
+    async def login_admin(request: Request, response: Response) -> dict[str, str]:
+        """Inicia uma sessão administrativa de demonstração."""
+        try:
+            credenciais = await request.json()
+        except ValueError as erro:
+            raise HTTPException(status_code=400, detail="JSON inválido.") from erro
+        if not isinstance(credenciais, dict):
+            raise HTTPException(status_code=400, detail="JSON inválido.")
+        usuario = credenciais.get("usuario")
+        senha = credenciais.get("senha")
+        if not (
+            isinstance(usuario, str)
+            and isinstance(senha, str)
+            and secrets.compare_digest(usuario.encode("utf-8"), b"admin")
+            and secrets.compare_digest(senha.encode("utf-8"), b"admin")
+        ):
+            raise HTTPException(status_code=401, detail="Usuário ou senha inválidos.")
+
+        agora = time.monotonic()
+        for sessao_existente, expiracao in list(sessoes_admin.items()):
+            if expiracao <= agora:
+                del sessoes_admin[sessao_existente]
+        sessao = secrets.token_urlsafe(32)
+        sessoes_admin[sessao] = agora + duracao_sessao
+        response.set_cookie(
+            "sessao_admin",
+            sessao,
+            httponly=True,
+            samesite="strict",
+            max_age=duracao_sessao,
+        )
+        return {"mensagem": "Login realizado com sucesso."}
+
+    @app.post("/admin/logout", include_in_schema=False)
+    def logout_admin(request: Request, response: Response) -> dict[str, str]:
+        """Encerra a sessão administrativa atual."""
+        sessao = request.cookies.get("sessao_admin")
+        if sessao:
+            sessoes_admin.pop(sessao, None)
+        response.delete_cookie("sessao_admin", httponly=True, samesite="strict")
+        return {"mensagem": "Sessão encerrada."}
+
+    @app.get("/admin/tabelas", include_in_schema=False)
+    def tabelas_admin(request: Request) -> dict[str, Any]:
+        """Lista os dados de todas as tabelas do banco após autenticação."""
+        obter_sessao_admin(request)
+
+        with closing(sqlite3.connect(caminho_banco)) as conexao:
+            conexao.row_factory = sqlite3.Row
+            tabelas = conexao.execute(
+                """
+                SELECT name FROM sqlite_master
+                WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+                ORDER BY name
+                """
+            ).fetchall()
+            resultado = []
+            for tabela in tabelas:
+                nome = tabela["name"]
+                identificador = '"' + nome.replace('"', '""') + '"'
+                colunas = [
+                    coluna["name"]
+                    for coluna in conexao.execute(
+                        f"PRAGMA table_info({identificador})"
+                    ).fetchall()
+                ]
+                linhas = [
+                    dict(linha)
+                    for linha in conexao.execute(
+                        f"SELECT * FROM {identificador}"
+                    ).fetchall()
+                ]
+                resultado.append(
+                    {"nome": nome, "colunas": colunas, "linhas": linhas}
+                )
+        return {"tabelas": resultado}
 
     @app.get("/resumo-vendas")
     def resumo_vendas(
@@ -201,7 +306,7 @@ def criar_app(caminho_banco: Path = CAMINHO_BANCO) -> FastAPI:
 
     @app.get("/analise-produtos")
     def analise_produtos(
-        limite: int = Query(default=10, ge=1, le=100),
+        limite: int = Query(default=10, ge=1, le=500),
     ) -> dict[str, Any]:
         """Classifica produtos por faturamento e unidades vendidas."""
         base_sql = """

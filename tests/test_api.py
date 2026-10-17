@@ -142,6 +142,56 @@ class TestApiVendas(unittest.TestCase):
         self.assertEqual(resposta.json()["quantidade_clientes"], esperado[1])
         self.assertEqual(resposta.json()["valor_total"], esperado[2])
 
+    def test_portal_web_e_protegido_e_exibe_tabelas_apos_login(self) -> None:
+        """Entrega o portal e protege a consulta completa das tabelas."""
+        portal = self.cliente.get("/")
+        self.assertEqual(portal.status_code, 200)
+        self.assertIn("text/html", portal.headers["content-type"])
+        self.assertIn(
+            "text/css",
+            self.cliente.get("/portal-assets/style.css").headers["content-type"],
+        )
+        self.assertIn(
+            "javascript",
+            self.cliente.get("/portal-assets/app.js").headers["content-type"],
+        )
+
+        sem_login = self.cliente.get("/admin/tabelas")
+        self.assertEqual(sem_login.status_code, 401)
+
+        login_invalido = self.cliente.post(
+            "/admin/login",
+            json={"usuario": "admin", "senha": "incorreta"},
+        )
+        self.assertEqual(login_invalido.status_code, 401)
+        login_unicode = self.cliente.post(
+            "/admin/login",
+            json={"usuario": "administrador", "senha": "sëcret"},
+        )
+        self.assertEqual(login_unicode.status_code, 401)
+
+        todos_produtos = self.cliente.get("/analise-produtos", params={"limite": 500})
+        self.assertEqual(len(todos_produtos.json()["maior_potencial"]), 120)
+
+        login = self.cliente.post(
+            "/admin/login",
+            json={"usuario": "admin", "senha": "admin"},
+        )
+        self.assertEqual(login.status_code, 200)
+        tabelas = self.cliente.get("/admin/tabelas")
+        self.assertEqual(tabelas.status_code, 200)
+        dados = {tabela["nome"]: tabela for tabela in tabelas.json()["tabelas"]}
+        self.assertEqual(
+            set(dados),
+            {"tb_cliente", "tb_item_compra", "tb_produto", "td_compra"},
+        )
+        self.assertIn("email", dados["tb_cliente"]["colunas"])
+        self.assertEqual(len(dados["tb_produto"]["linhas"]), 120)
+
+        logout = self.cliente.post("/admin/logout")
+        self.assertEqual(logout.status_code, 200)
+        self.assertEqual(self.cliente.get("/admin/tabelas").status_code, 401)
+
 
 if __name__ == "__main__":
     unittest.main()

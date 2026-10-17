@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f7fb">
+    <title>Visão geral | Vendas</title>
+    <link rel="stylesheet" href="/portal-assets/style.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="/" aria-label="Portal de vendas, início">
+          <span class="brand-mark">V</span>
+          <span>vendas<span class="brand-dot">.</span><small>PORTAL DE GESTÃO</small></span>
+        </a>
+        <div class="nav-label">MENU PRINCIPAL</div>
+        <nav class="main-nav" aria-label="Menu principal">
+          <button class="nav-link active" data-view="dashboard"><span class="nav-icon">◫</span>Visão geral</button>
+          <button class="nav-link" data-view="compras"><span class="nav-icon">▤</span>Compras</button>
+          <button class="nav-link" data-view="clientes"><span class="nav-icon">♙</span>Clientes</button>
+          <button class="nav-link" data-view="produtos"><span class="nav-icon">◇</span>Produtos</button>
+        </nav>
+        <div class="sidebar-spacer"></div>
+        <div class="sidebar-note">
+          <span class="online-dot"></span>
+          <span>API conectada<small>Banco de vendas SQLite</small></span>
+        </div>
+        <button class="nav-link admin-nav" data-view="admin"><span class="nav-icon">⚙</span>Administração<span class="nav-chevron">›</span></button>
+        <div class="sidebar-footer">Portal de análise de vendas<br>Dados atualizados pela API</div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div class="breadcrumbs">Portal <span>/</span> <strong id="breadcrumb">Visão geral</strong></div>
+          <div class="topbar-right"><span class="date-label" id="today-label"></span><span class="avatar">V</span></div>
+        </header>
+
+        <section class="view active" id="view-dashboard">
+          <div class="page-heading">
+            <div><p class="eyebrow">PAINEL DE CONTROLE</p><h1>Visão geral</h1><p class="subheading">Acompanhe o desempenho das suas vendas em um só lugar.</p></div>
+            <div class="date-filter">
+              <label>De <input type="date" id="date-start"></label>
+              <label>Até <input type="date" id="date-end"></label>
+              <button class="button button-primary" id="apply-filter">Aplicar</button>
+            </div>
+          </div>
+
+          <div class="notice" id="load-error" role="alert" hidden></div>
+          <div class="kpi-grid">
+            <article class="kpi-card"><div class="kpi-top"><span>Faturamento</span><span class="kpi-icon purple">$</span></div><strong id="kpi-revenue">—</strong><small>no período selecionado</small></article>
+            <article class="kpi-card"><div class="kpi-top"><span>Compras realizadas</span><span class="kpi-icon blue">▤</span></div><strong id="kpi-orders">—</strong><small>no período selecionado</small></article>
+            <article class="kpi-card"><div class="kpi-top"><span>Clientes ativos</span><span class="kpi-icon green">♙</span></div><strong id="kpi-customers">—</strong><small>com compras no período</small></article>
+            <article class="kpi-card"><div class="kpi-top"><span>Ticket médio</span><span class="kpi-icon orange">↗</span></div><strong id="kpi-ticket">—</strong><small>valor médio por compra</small></article>
+          </div>
+
+          <div class="dashboard-grid">
+            <article class="panel chart-panel">
+              <div class="panel-heading"><div><h2>Faturamento ao longo do tempo</h2><p>Distribuição das compras por mês</p></div><span class="panel-tag">VENDAS</span></div>
+              <div class="chart-wrap"><canvas id="sales-chart" aria-label="Gráfico de faturamento mensal" role="img"></canvas><div class="chart-empty" id="chart-empty" hidden>Não há compras no período selecionado.</div></div>
+            </article>
+            <article class="panel ranking-panel">
+              <div class="panel-heading"><div><h2>Produtos em destaque</h2><p>Maiores faturamentos acumulados</p></div><button class="text-button" data-go="produtos">Ver todos <span>→</span></button></div>
+              <div id="top-products" class="ranking-list"><div class="skeleton"></div></div>
+            </article>
+          </div>
+
+          <article class="panel table-panel">
+            <div class="panel-heading"><div><h2>Compras recentes</h2><p>Últimas movimentações registradas</p></div><button class="text-button" data-go="compras">Ver todas <span>→</span></button></div>
+            <div class="table-scroll"><table><thead><tr><th>COMPRA</th><th>CLIENTE</th><th>DATA</th><th class="align-right">VALOR</th><th>STATUS</th></tr></thead><tbody id="recent-purchases"><tr><td colspan="5" class="empty-cell">Carregando compras…</td></tr></tbody></table></div>
+          </article>
+        </section>
+
+        <section class="view" id="view-compras">
+          <div class="page-heading"><div><p class="eyebrow">MOVIMENTAÇÕES</p><h1>Compras</h1><p class="subheading">Consulte as compras e filtre por período.</p></div></div>
+          <article class="panel table-panel">
+            <div class="toolbar"><div class="search-box"><span>⌕</span><input id="purchase-search" type="search" placeholder="Buscar por cliente ou número"></div><span class="result-count" id="purchase-count"></span></div>
+            <div class="table-scroll"><table><thead><tr><th>COMPRA</th><th>CLIENTE</th><th>DATA</th><th class="align-right">VALOR</th><th>STATUS</th></tr></thead><tbody id="purchases-table"></tbody></table></div>
+          </article>
+        </section>
+
+        <section class="view" id="view-clientes">
+          <div class="page-heading"><div><p class="eyebrow">RELACIONAMENTO</p><h1>Clientes</h1><p class="subheading">Visão de compras e valor acumulado por cliente.</p></div></div>
+          <article class="panel table-panel">
+            <div class="toolbar"><div class="search-box"><span>⌕</span><input id="customer-search" type="search" placeholder="Buscar cliente, cidade ou bairro"></div><span class="result-count" id="customer-count"></span></div>
+            <div class="table-scroll"><table><thead><tr><th>CLIENTE</th><th>LOCALIDADE</th><th>COMPRAS</th><th class="align-right">TOTAL GASTO</th><th class="align-right">TICKET MÉDIO</th></tr></thead><tbody id="customers-table"></tbody></table></div>
+          </article>
+        </section>
+
+        <section class="view" id="view-produtos">
+          <div class="page-heading"><div><p class="eyebrow">CATÁLOGO</p><h1>Produtos</h1><p class="subheading">Desempenho do catálogo baseado no faturamento acumulado.</p></div></div>
+          <div class="product-summary" id="product-summary"></div>
+          <article class="panel table-panel">
+            <div class="toolbar"><div class="search-box"><span>⌕</span><input id="product-search" type="search" placeholder="Buscar produto ou categoria"></div><span class="result-count" id="product-count"></span></div>
+            <div class="table-scroll"><table><thead><tr><th>PRODUTO</th><th>CATEGORIA</th><th class="align-right">PREÇO</th><th>UNIDADES VENDIDAS</th><th class="align-right">FATURAMENTO</th></tr></thead><tbody id="products-table"></tbody></table></div>
+          </article>
+        </section>
+
+        <section class="view" id="view-admin">
+          <div class="page-heading"><div><p class="eyebrow">CONFIGURAÇÕES</p><h1>Administração</h1><p class="subheading">Acesso administrativo e consulta às tabelas do banco.</p></div></div>
+          <div class="admin-warning"><strong>Área restrita</strong><span>Faça login para visualizar os registros completos do banco de dados.</span></div>
+          <article class="panel admin-panel">
+            <form id="admin-login" class="login-card">
+              <div class="login-symbol">⌑</div><h2>Acesso administrativo</h2><p>Entre com suas credenciais para continuar.</p>
+              <label for="admin-user">Usuário</label><input id="admin-user" name="usuario" autocomplete="username" required>
+              <label for="admin-password">Senha</label><input id="admin-password" name="senha" type="password" autocomplete="current-password" required>
+              <p class="login-error" id="login-error" role="alert" hidden></p>
+              <button class="button button-primary login-submit" type="submit">Entrar no painel</button>
+              <small>Credenciais de demonstração: admin / admin</small>
+            </form>
+            <div id="admin-data" hidden>
+              <div class="admin-toolbar"><div><h2>Tabelas do banco de dados</h2><p>Registros completos — acesso administrativo</p></div><button class="button button-secondary" id="admin-logout">Sair da administração</button></div>
+              <div id="admin-tabs" class="admin-tabs" role="tablist"></div>
+              <div class="table-scroll admin-table-wrap"><table><thead id="admin-head"></thead><tbody id="admin-body"></tbody></table></div>
+              <div class="admin-table-footer" id="admin-table-count"></div>
+            </div>
+          </article>
+        </section>
+        <footer class="page-footer">Portal de Gestão de Vendas <span>·</span> Conectado à API de Análise de Vendas</footer>
+      </main>
+    </div>
+    <script src="/portal-assets/app.js" defer></script>
+  </body>
+</html>
