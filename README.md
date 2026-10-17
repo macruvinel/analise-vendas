@@ -16,9 +16,13 @@ VPL. Execute com `python funcoes_simples.py`.
 ## Banco de dados de vendas
 
 O arquivo `criar_banco.py` cria o banco SQLite `vendas.db`, com as tabelas
-`tb_produto`, `tb_cliente`, `td_compra` e `tb_item_compra`. Cada tabela recebe
-mais de 100 registros de exemplo, e as compras têm itens relacionados a
-produtos e clientes.
+`tb_produto`, `tb_cliente`, `td_compra` e `tb_item_compra`. O diagrama ER abaixo
+mostra suas colunas, chaves e relacionamentos:
+
+![Diagrama entidade-relacionamento do banco de vendas](docs/diagrama-er-vendas.svg)
+
+Cada tabela recebe mais de 100 registros de exemplo, e as compras têm itens
+relacionados a produtos e clientes.
 
 Gere ou atualize o banco executando `python criar_banco.py`. O preenchimento
 usa dados reproduzíveis e pode ser executado novamente sem duplicar os
@@ -32,6 +36,8 @@ inicie a API com `python -m uvicorn api:app --reload`. A documentação interati
 fica disponível em `http://127.0.0.1:8000/docs`. Se `vendas.db` ainda não
 existir, a API o cria e popula ao iniciar. Defina `VENDAS_DB_PATH` para usar
 outro arquivo SQLite.
+
+![Documentação da API de vendas](api.png)
 
 Endpoints disponíveis:
 

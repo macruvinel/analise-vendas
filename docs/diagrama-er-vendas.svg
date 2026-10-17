@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="760" viewBox="0 0 1400 760" role="img" aria-labelledby="title description">
+  <title id="title">Diagrama ER do banco de dados de vendas</title>
+  <desc id="description">Quatro tabelas relacionadas: clientes fazem compras; compras contêm itens; cada item referencia um produto.</desc>
+  <defs>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; fill: #1f2937; }
+      .entity { fill: #ffffff; stroke: #64748b; stroke-width: 2; }
+      .entity-title { fill: #e8eef7; }
+      .table-name { font-size: 20px; font-weight: 700; }
+      .field { font-size: 17px; }
+      .key { font-size: 13px; font-weight: 700; fill: #475569; }
+      .relationship { stroke: #475569; stroke-width: 2.5; fill: none; }
+      .cardinality { font-size: 16px; font-weight: 700; fill: #334155; }
+      .note { font-size: 14px; fill: #475569; }
+    </style>
+  </defs>
+
+  <text x="700" y="42" text-anchor="middle" font-size="26" font-weight="700">Banco de dados de vendas — Diagrama ER</text>
+
+  <g aria-label="Relação entre cliente e compra">
+    <path class="relationship" d="M570 218 H830"/>
+    <text class="cardinality" x="585" y="204">1</text>
+    <text class="cardinality" x="775" y="204">0..N</text>
+    <text class="note" x="700" y="242" text-anchor="middle">id_cliente (FK)</text>
+  </g>
+  <g aria-label="Relação entre compra e item da compra">
+    <path class="relationship" d="M1080 350 V470"/>
+    <text class="cardinality" x="1093" y="370">1</text>
+    <text class="cardinality" x="1093" y="455">0..N</text>
+    <text class="note" x="1110" y="414">id_compra (FK)</text>
+  </g>
+  <g aria-label="Relação entre produto e item da compra">
+    <path class="relationship" d="M570 590 H830"/>
+    <text class="cardinality" x="585" y="576">1</text>
+    <text class="cardinality" x="775" y="576">0..N</text>
+    <text class="note" x="700" y="614" text-anchor="middle">id_produto (FK)</text>
+  </g>
+
+  <g aria-label="Tabela tb_cliente">
+    <rect class="entity" x="70" y="100" width="500" height="250" rx="8"/>
+    <path class="entity-title" d="M78 100 H562 Q570 100 570 108 V146 H70 V108 Q70 100 78 100Z"/>
+    <text class="table-name" x="90" y="131">tb_cliente</text>
+    <text class="field" x="90" y="176">id</text><text class="key" x="520" y="176" text-anchor="end">PK</text>
+    <text class="field" x="90" y="204">nome</text>
+    <text class="field" x="90" y="232">email</text><text class="key" x="520" y="232" text-anchor="end">UNIQUE</text>
+    <text class="field" x="90" y="260">idade</text>
+    <text class="field" x="90" y="288">bairro</text>
+    <text class="field" x="90" y="316">cidade</text>
+  </g>
+
+  <g aria-label="Tabela td_compra">
+    <rect class="entity" x="830" y="100" width="500" height="250" rx="8"/>
+    <path class="entity-title" d="M838 100 H1322 Q1330 100 1330 108 V146 H830 V108 Q830 100 838 100Z"/>
+    <text class="table-name" x="850" y="131">td_compra</text>
+    <text class="field" x="850" y="176">id</text><text class="key" x="1280" y="176" text-anchor="end">PK</text>
+    <text class="field" x="850" y="204">dt_compra</text>
+    <text class="field" x="850" y="232">id_cliente</text><text class="key" x="1280" y="232" text-anchor="end">FK</text>
+    <text class="field" x="850" y="260">valor_total</text>
+  </g>
+
+  <g aria-label="Tabela tb_produto">
+    <rect class="entity" x="70" y="470" width="500" height="220" rx="8"/>
+    <path class="entity-title" d="M78 470 H562 Q570 470 570 478 V516 H70 V478 Q70 470 78 470Z"/>
+    <text class="table-name" x="90" y="501">tb_produto</text>
+    <text class="field" x="90" y="546">id</text><text class="key" x="520" y="546" text-anchor="end">PK</text>
+    <text class="field" x="90" y="574">nome</text>
+    <text class="field" x="90" y="602">categoria</text>
+    <text class="field" x="90" y="630">preco</text>
+  </g>
+
+  <g aria-label="Tabela tb_item_compra">
+    <rect class="entity" x="830" y="470" width="500" height="220" rx="8"/>
+    <path class="entity-title" d="M838 470 H1322 Q1330 470 1330 478 V516 H830 V478 Q830 470 838 470Z"/>
+    <text class="table-name" x="850" y="501">tb_item_compra</text>
+    <text class="field" x="850" y="546">id</text><text class="key" x="1280" y="546" text-anchor="end">PK</text>
+    <text class="field" x="850" y="574">id_compra</text><text class="key" x="1280" y="574" text-anchor="end">FK</text>
+    <text class="field" x="850" y="602">id_produto</text><text class="key" x="1280" y="602" text-anchor="end">FK</text>
+    <text class="field" x="850" y="630">quantidade</text>
+    <text class="note" x="850" y="662">UNIQUE (id_compra, id_produto)</text>
+  </g>
+
+  <text class="note" x="70" y="730">PK: chave primária · FK: chave estrangeira · UNIQUE: valor ou combinação única · 0..N: nenhum ou vários</text>
+</svg>
