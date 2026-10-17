@@ -40,3 +40,8 @@ htmlcov/
 # Python project tooling
 pip-wheel-metadata/
 .pdm-python
+
+# Local SQLite database files
+*.db
+*.db-shm
+*.db-wal
